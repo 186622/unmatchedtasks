@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box h1 {
+            color: #5a67d8;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #5a67d8;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .role-badge {
+            padding: 5px 15px;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .role-staff { background: #48bb78; color: white; }
+        .role-developer { background: #4299e1; color: white; }
+        .role-admin { background: #ed8936; color: white; }
+        .role-none { background: #718096; color: white; }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            padding: 12px 25px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-btn.active {
+            background: #5a67d8;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .content-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .task-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .task-pending { border-left-color: #ed8936; }
+        .task-progress { border-left-color: #4299e1; }
+        .task-completed { border-left-color: #48bb78; }
+        .task-rejected { border-left-color: #f56565; }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .task-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .task-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending { background: #fed7aa; color: #c05621; }
+        .status-progress { background: #bee3f8; color: #2b6cb0; }
+        .status-completed { background: #c6f6d5; color: #276749; }
+        .status-rejected { background: #fed7d7; color: #c53030; }
+
+        .task-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #5a67d8;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #5a67d8;
+            box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.1);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #5a67d8, #667eea);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #276749;
+            border: 1px solid #9ae6b4;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .task-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <h1>🚀 Dev Task Manager</h1>
+            <div id="loginAlert"></div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <span id="loginSpinner" class="loading hidden"></span>
+                    <span id="loginText">Login</span>
+                </button>
+            </form>
+            <div style="text-align: center; margin-top: 20px;">
+                <p>Don't have an account? <a href="#" onclick="showRegister()" style="color: #5a67d8;">Register here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Screen -->
+    <div id="registerScreen" class="login-container hidden">
+        <div class="login-box">
+            <h1>📝 Register</h1>
+            <div id="registerAlert"></div>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="regUsername">Username</label>
+                    <input type="text" class="form-control" id="regUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">Email</label>
+                    <input type="email" class="form-control" id="regEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Password</label>
+                    <input type="password" class="form-control" id="regPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <span id="registerSpinner" class="loading hidden"></span>
+                    <span id="registerText">Register</span>
+                </button>
+            </form>
+            <div style="text-align: center; margin-top: 20px;">
+                <p>Already have an account? <a href="#" onclick="showLogin()" style="color: #5a67d8;">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="successScreen" class="container hidden">
+        <div class="header">
+            <h1>🚀 Dev Task Manager</h1>
+            <div class="user-info">
+                <span id="currentUsername">Loading...</span>
+                <span class="role-badge" id="currentUserRole">Loading...</span>
+                <button class="btn btn-primary" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="showTab('tasks')">📋 Tasks</button>
+            <button class="tab-btn" onclick="showTab('create')" id="createTabBtn" style="display: none;">➕ Create Task</button>
+            <button class="tab-btn" onclick="showTab('statistics')">📊 Statistics</button>
+            <button class="tab-btn" onclick="showTab('admin')" id="adminTabBtn" style="display: none;">⚙️ Admin</button>
+        </div>
+
+        <!-- Tasks Tab -->
+        <div id="tasksTab" class="content-section">
+            <div class="filters">
+                <select class="form-control" id="statusFilter" onchange="filterTasks()" style="width: auto;">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <select class="form-control" id="areaFilter" onchange="filterTasks()" style="width: auto;">
+                    <option value="">All Areas</option>
+                    <option value="script">Script</option>
+                    <option value="cars">Cars</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="mlo">MLO</option>
+                </select>
+                <select class="form-control" id="assigneeFilter" onchange="filterTasks()" style="width: auto;">
+                    <option value="">All Assignees</option>
+                    <option value="me">My Tasks</option>
+                </select>
+                <button class="btn btn-primary" onclick="clearFilters()">Clear Filters</button>
+                <button class="btn btn-success" onclick="loadTasks()">🔄 Refresh</button>
+            </div>
+
+            <div id="tasksList">
+                <div style="text-align: center; padding: 40px;">
+                    <div class="loading"></div>
+                    <p>Loading tasks...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Task Tab -->
+        <div id="createTab" class="content-section hidden">
+            <h2>➕ Create New Task</h2>
+            <div id="createAlert"></div>
+            <form id="createTaskForm">
+                <div class="form-group">
+                    <label for="taskTitle">Title *</label>
+                    <input type="text" class="form-control" id="taskTitle" required placeholder="Enter task title...">
+                </div>
+                <div class="form-group">
+                    <label for="taskArea">Area *</label>
+                    <select class="form-control" id="taskArea" required>
+                        <option value="">Select Area</option>
+                        <option value="script">Script</option>
+                        <option value="cars">Cars</option>
+                        <option value="clothing">Clothing</option>
+                        <option value="mlo">MLO</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Description *</label>
+                    <textarea class="form-control" id="taskDescription" rows="4" required placeholder="Describe the task in detail..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="taskAssignee">Assign to Developer</label>
+                    <select class="form-control" id="taskAssignee">
+                        <option value="">Unassigned</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="taskEvidence">Evidence (File Upload)</label>
+                    <input type="file" class="form-control" id="taskEvidence" accept="image/*,video/*">
+                    <small style="color: #718096;">Upload images or videos as evidence (optional)</small>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span id="createSpinner" class="loading hidden"></span>
+                    <span id="createText">Create Task</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="statisticsTab" class="content-section hidden">
+            <h2>📊 Statistics Dashboard</h2>
+            <div id="statsContent">
+                <div style="text-align: center; padding: 40px;">
+                    <div class="loading"></div>
+                    <p>Loading statistics...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Tab -->
+        <div id="adminTabContent" class="content-section hidden">
+            <h2>⚙️ Admin Panel</h2>
+            <div id="adminContent">
+                <div style="text-align: center; padding: 40px;">
+                    <div class="loading"></div>
+                    <p>Loading users...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div id="taskModal" class="modal hidden">
+        <div class="modal-content">
+            <div id="taskModalContent">
+                <!-- Task details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://unmatchedtasks-production.up.railway.app/api';
+        let currentUser = null;
+        let authToken = null;
+        let tasks = [];
+        let developers = [];
+        let allTasks = [];
+
+        // Remove any existing error modals or popups on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            // Clear any existing localStorage issues
+            try {
+                // Test localStorage access
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+            } catch (e) {
+                console.log('LocalStorage not available, using session storage');
+            }
+            
+            // Remove any stuck modals or overlays
+            const modals = document.querySelectorAll('.modal, .overlay, .popup');
+            modals.forEach(modal => modal.remove());
+            
+            setupEventListeners();
+            console.log('App initialized successfully');
+        });
+
+        function setupEventListeners() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const createTaskForm = document.getElementById('createTaskForm');
+            
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+            if (registerForm) {
+                registerForm.addEventListener('submit', handleRegister);
+            }
+            if (createTaskForm) {
+                createTaskForm.addEventListener('submit', handleCreateTask);
+            }
+
+            // Modal close functionality
+            document.addEventListener('click', function(e) {
+                if (e.target === document.getElementById('taskModal')) {
+                    closeModal();
+                }
+            });
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showAlert('loginAlert', 'Please enter username and password', 'error');
+                return;
+            }
+            
+            setLoading('login', true);
+            clearAlert('loginAlert');
+            
+            try {
+                console.log('Attempting login...');
+                
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Login successful:', data);
+                    
+                    authToken = data.token;
+                    currentUser = data.user;
+                    
+                    // Store token safely
+                    try {
+                        localStorage.setItem('authToken', authToken);
+                    } catch (e) {
+                        console.log('Could not store token in localStorage');
+                    }
+                    
+                    showMainDashboard();
+                } else {
+                    const errorData = await response.json();
+                    console.log('Login error:', errorData);
+                    showAlert('loginAlert', errorData.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                showAlert('loginAlert', 'Cannot connect to server. Make sure backend is running on port 3000.', 'error');
+            }
+            
+            setLoading('login', false);
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            
+            setLoading('register', true);
+            clearAlert('registerAlert');
+            
+            try {
+                const response = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert('registerAlert', 'Registration successful! Please wait for admin approval.', 'success');
+                    setTimeout(() => showLogin(), 3000);
+                } else {
+                    showAlert('registerAlert', data.error || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showAlert('registerAlert', 'Cannot connect to server. Make sure backend is running.', 'error');
+            }
+            
+            setLoading('register', false);
+        }
+
+        async function handleCreateTask(e) {
+            e.preventDefault();
+            setLoading('create', true);
+            clearAlert('createAlert');
+
+            try {
+                const formData = new FormData();
+                formData.append('title', document.getElementById('taskTitle').value);
+                formData.append('area', document.getElementById('taskArea').value);
+                formData.append('description', document.getElementById('taskDescription').value);
+                formData.append('assigneeId', document.getElementById('taskAssignee').value || '');
+                
+                const evidenceFile = document.getElementById('taskEvidence').files[0];
+                if (evidenceFile) {
+                    formData.append('evidence', evidenceFile);
+                }
+
+                const response = await fetch(`${API_BASE}/tasks`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${authToken}` },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    showAlert('createAlert', 'Task created successfully! 🎉', 'success');
+                    document.getElementById('createTaskForm').reset();
+                    await loadTasks();
+                    setTimeout(() => showTab('tasks'), 2000);
+                } else {
+                    const error = await response.json();
+                    showAlert('createAlert', error.error, 'error');
+                }
+            } catch (error) {
+                showAlert('createAlert', 'Failed to create task', 'error');
+            }
+
+            setLoading('create', false);
+        }
+
+        function showLogin() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('registerScreen').classList.add('hidden');
+            document.getElementById('successScreen').classList.add('hidden');
+            clearAlert('loginAlert');
+        }
+
+        function showRegister() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('registerScreen').classList.remove('hidden');
+            document.getElementById('successScreen').classList.add('hidden');
+            clearAlert('registerAlert');
+        }
+
+        function showMainDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('registerScreen').classList.add('hidden');
+            document.getElementById('successScreen').classList.remove('hidden');
+            
+            updateUserInterface();
+            loadTasks();
+            loadDevelopers();
+            loadStatistics();
+            
+            if (currentUser.role === 'admin') {
+                loadUsers();
+            }
+        }
+
+        function updateUserInterface() {
+            document.getElementById('currentUsername').textContent = currentUser.username;
+            document.getElementById('currentUserRole').textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+            document.getElementById('currentUserRole').className = `role-badge role-${currentUser.role}`;
+
+            // Show/hide tabs based on role
+            const createTab = document.getElementById('createTabBtn');
+            const adminTab = document.getElementById('adminTabBtn');
+            
+            if (['staff', 'developer', 'admin'].includes(currentUser.role)) {
+                createTab.style.display = 'block';
+            }
+            if (currentUser.role === 'admin') {
+                adminTab.style.display = 'block';
+            }
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.content-section').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            const tabElement = document.getElementById(tabName + 'Tab') || document.getElementById(tabName + 'TabContent');
+            if (tabElement) {
+                tabElement.classList.remove('hidden');
+            }
+            
+            // Make clicked button active
+            event.target.classList.add('active');
+
+            // Load data for specific tabs
+            if (tabName === 'statistics') {
+                loadStatistics();
+            } else if (tabName === 'admin' && currentUser.role === 'admin') {
+                loadUsers();
+            }
+        }
+
+        // API functions
+        async function apiCall(endpoint, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            const finalOptions = {
+                ...defaultOptions,
+                ...options,
+                headers: {
+                    ...defaultOptions.headers,
+                    ...options.headers
+                }
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, finalOptions);
+                
+                if (response.status === 401) {
+                    logout();
+                    return null;
+                }
+                
+                return response;
+            } catch (error) {
+                console.error('API call failed:', error);
+                return null;
+            }
+        }
+
+        async function loadTasks() {
+            try {
+                const response = await apiCall('/tasks');
+                if (response && response.ok) {
+                    allTasks = await response.json();
+                    tasks = [...allTasks];
+                    renderTasks();
+                    populateAssigneeFilter();
+                    console.log('Tasks loaded:', tasks.length);
+                } else {
+                    document.getElementById('tasksList').innerHTML = '<div style="text-align: center; padding: 40px; color: #718096;">Failed to load tasks</div>';
+                }
+            } catch (error) {
+                console.error('Load tasks error:', error);
+                document.getElementById('tasksList').innerHTML = '<div style="text-align: center; padding: 40px; color: #718096;">Error loading tasks</div>';
+            }
+        }
+
+        async function loadDevelopers() {
+            try {
+                const response = await apiCall('/developers');
+                if (response && response.ok) {
+                    developers = await response.json();
+                    populateDeveloperSelect();
+                    console.log('Developers loaded:', developers.length);
+                }
+            } catch (error) {
+                console.error('Load developers error:', error);
+            }
+        }
+
+        async function loadStatistics() {
+            try {
+                const response = await apiCall('/statistics');
+                if (response && response.ok) {
+                    const stats = await response.json();
+                    renderStatistics(stats);
+                }
+            } catch (error) {
+                console.error('Load statistics error:', error);
+                document.getElementById('statsContent').innerHTML = '<div style="text-align: center; padding: 40px; color: #718096;">Failed to load statistics</div>';
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await apiCall('/users');
+                if (response && response.ok) {
+                    const users = await response.json();
+                    renderUsers(users);
+                }
+            } catch (error) {
+                console.error('Load users error:', error);
+            }
+        }
+
+        async function updateTaskStatus(taskId, status, rejectionReason = null) {
+            try {
+                const response = await apiCall(`/tasks/${taskId}/status`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status, rejectionReason })
+                });
+
+                if (response && response.ok) {
+                    await loadTasks();
+                    showAlert('tasksAlert', `Task ${status === 'completed' ? 'completed' : status === 'rejected' ? 'rejected' : 'updated'} successfully! 🎉`, 'success');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.error);
+                }
+            } catch (error) {
+                alert('Failed to update task status');
+            }
+        }
+
+        async function updateUserRole(userId, role) {
+            try {
+                const response = await apiCall(`/users/${userId}/role`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ role })
+                });
+
+                if (response && response.ok) {
+                    await loadUsers();
+                    showAlert('adminAlert', 'User role updated successfully! 🎉', 'success');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.error);
+                }
+            } catch (error) {
+                alert('Failed to update user role');
+            }
+        }
+
+        // Render functions
+        function renderTasks(filteredTasks = null) {
+            const tasksToRender = filteredTasks || tasks;
+            const tasksList = document.getElementById('tasksList');
+            
+            if (tasksToRender.length === 0) {
+                tasksList.innerHTML = '<div style="text-align: center; padding: 40px; color: #718096;"><h3>No tasks found</h3><p>Create your first task to get started!</p></div>';
+                return;
+            }
+
+            tasksList.innerHTML = tasksToRender.map(task => `
+                <div class="task-card task-${task.status}" onclick="openTaskModal(${task.id})">
+                    <div class="task-header">
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-status status-${task.status}">${task.status.replace('_', ' ')}</div>
+                    </div>
+                    <div class="task-meta">
+                        <div><strong>Area:</strong> ${task.area.toUpperCase()}</div>
+                        <div><strong>Assigned to:</strong> ${task.assignee_username || 'Unassigned'}</div>
+                        <div><strong>Created by:</strong> ${task.created_by_username}</div>
+                        <div><strong>Created:</strong> ${new Date(task.created_at).toLocaleDateString()}</div>
+                    </div>
+                    <div style="margin: 15px 0; color: #4a5568;">${task.description.substring(0, 150)}${task.description.length > 150 ? '...' : ''}</div>
+                    ${canManageTask(task) ? `
+                        <div class="task-actions">
+                            ${task.status !== 'completed' ? `<button class="btn btn-success" onclick="event.stopPropagation(); updateTaskStatus(${task.id}, 'completed')">✅ Complete</button>` : ''}
+                            ${task.status !== 'progress' ? `<button class="btn btn-primary" onclick="event.stopPropagation(); updateTaskStatus(${task.id}, 'progress')">🔄 In Progress</button>` : ''}
+                            ${task.status !== 'rejected' ? `<button class="btn btn-danger" onclick="event.stopPropagation(); rejectTask(${task.id})">❌ Reject</button>` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function renderStatistics(stats) {
+            const statsContent = document.getElementById('statsContent');
+            statsContent.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.overview.total}</div>
+                        <div class="stat-label">Total Tasks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.overview.completed}</div>
+                        <div class="stat-label">Completed Tasks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.overview.inProgress}</div>
+                        <div class="stat-label">In Progress</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.overview.pending}</div>
+                        <div class="stat-label">Pending Tasks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.personal.created}</div>
+                        <div class="stat-label">Tasks Created by You</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.personal.completed}</div>
+                        <div class="stat-label">Tasks Completed by You</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 40px;">
+                    <h3>🏆 Top Task Creators</h3>
+                    <div style="background: white; border-radius: 12px; padding: 20px; margin-top: 15px;">
+                        ${stats.leaderboards.topCreators.length > 0 ? stats.leaderboards.topCreators.map((user, index) => `
+                            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                                <span>${index + 1}. ${user.username}</span>
+                                <span><strong>${user.task_count} tasks</strong></span>
+                            </div>
+                        `).join('') : '<p style="text-align: center; color: #718096;">No data available</p>'}
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h3>💻 Top Developers</h3>
+                    <div style="background: white; border-radius: 12px; padding: 20px; margin-top: 15px;">
+                        ${stats.leaderboards.topDevelopers.length > 0 ? stats.leaderboards.topDevelopers.map((user, index) => `
+                            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                                <span>${index + 1}. ${user.username}</span>
+                                <span><strong>${user.completed_count} completed</strong></span>
+                            </div>
+                        `).join('') : '<p style="text-align: center; color: #718096;">No data available</p>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderUsers(users) {
+            const adminContent = document.getElementById('adminContent');
+            adminContent.innerHTML = `
+                <div id="adminAlert"></div>
+                <h3>👥 User Management</h3>
+                <div style="margin-top: 20px;">
+                    ${users.map(user => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; margin: 15px 0; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                            <div>
+                                <div style="font-size: 1.1rem; font-weight: 600; color: #2d3748;">${user.username}</div>
+                                <div style="color: #718096; margin: 5px 0;">${user.email}</div>
+                                <div style="color: #718096; font-size: 0.9rem;">Joined: ${new Date(user.created_at).toLocaleDateString()}</div>
+                                ${user.discord_username ? `<div style="color: #5865f2; font-size: 0.9rem;">Discord: ${user.discord_username}</div>` : ''}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <span class="role-badge role-${user.role}">${user.role}</span>
+                                <select class="form-control" style="width: 150px;" onchange="updateUserRole(${user.id}, this.value)">
+                                    <option value="none" ${user.role === 'none' ? 'selected' : ''}>No Role</option>
+                                    <option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option>
+                                    <option value="developer" ${user.role === 'developer' ? 'selected' : ''}>Developer</option>
+                                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function populateDeveloperSelect() {
+            const select = document.getElementById('taskAssignee');
+            if (select) {
+                select.innerHTML = '<option value="">Unassigned</option>';
+                developers.forEach(dev => {
+                    select.innerHTML += `<option value="${dev.id}">${dev.username}</option>`;
+                });
+            }
+        }
+
+        function populateAssigneeFilter() {
+            const select = document.getElementById('assigneeFilter');
+            if (select) {
+                // Add developers to filter
+                developers.forEach(dev => {
+                    if (!select.innerHTML.includes(`value="${dev.username}"`)) {
+                        select.innerHTML += `<option value="${dev.username}">${dev.username}</option>`;
+                    }
+                });
+            }
+        }
+
+        // Task management functions
+        function canManageTask(task) {
+            if (currentUser.role === 'admin') return true;
+            if (currentUser.role === 'developer' && task.assignee_id === currentUser.id) return true;
+            return false;
+        }
+
+        function filterTasks() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const areaFilter = document.getElementById('areaFilter').value;
+            const assigneeFilter = document.getElementById('assigneeFilter').value;
+
+            let filteredTasks = allTasks.filter(task => {
+                let matches = true;
+                
+                if (statusFilter && task.status !== statusFilter) matches = false;
+                if (areaFilter && task.area !== areaFilter) matches = false;
+                if (assigneeFilter) {
+                    if (assigneeFilter === 'me' && task.assignee_id !== currentUser.id) matches = false;
+                    else if (assigneeFilter !== 'me' && task.assignee_username !== assigneeFilter) matches = false;
+                }
+                
+                return matches;
+            });
+
+            renderTasks(filteredTasks);
+        }
+
+        function clearFilters() {
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('areaFilter').value = '';
+            document.getElementById('assigneeFilter').value = '';
+            renderTasks();
+        }
+
+        function rejectTask(taskId) {
+            const reason = prompt('Please provide a rejection reason:');
+            if (reason && reason.trim()) {
+                updateTaskStatus(taskId, 'rejected', reason.trim());
+            }
+        }
+
+        function openTaskModal(taskId) {
+            const task = allTasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const modal = document.getElementById('taskModal');
+            const content = document.getElementById('taskModalContent');
+            
+            content.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">${task.title}</h2>
+                    <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
+                </div>
+                
+                <div style="margin: 20px 0;">
+                    <strong>Status:</strong> <span class="task-status status-${task.status}">${task.status.replace('_', ' ')}</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0;">
+                    <div><strong>Area:</strong> ${task.area.toUpperCase()}</div>
+                    <div><strong>Assigned to:</strong> ${task.assignee_username || 'Unassigned'}</div>
+                    <div><strong>Created by:</strong> ${task.created_by_username}</div>
+                    <div><strong>Created:</strong> ${new Date(task.created_at).toLocaleDateString()}</div>
+                </div>
+                
+                <div style="margin: 20px 0;">
+                    <strong>Description:</strong><br>
+                    <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-top: 10px; line-height: 1.5;">
+                        ${task.description}
+                    </div>
+                </div>
+                
+                ${task.evidence_url ? `
+                    <div style="margin: 20px 0;">
+                        <strong>Evidence:</strong><br>
+                        <div style="margin-top: 10px;">
+                            ${task.evidence_url.match(/\.(jpg|jpeg|png|gif)$/i) ? 
+                                `<img src="http://localhost:3000${task.evidence_url}" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" alt="Evidence">` :
+                                `<a href="http://localhost:3000${task.evidence_url}" target="_blank" style="color: #5a67d8; text-decoration: none; font-weight: 600;">📎 View Evidence File</a>`
+                            }
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${task.rejection_reason ? `
+                    <div style="margin: 20px 0;">
+                        <strong>Rejection Reason:</strong><br>
+                        <div style="background: #fed7d7; padding: 15px; border-radius: 8px; margin-top: 10px; color: #c53030;">
+                            ${task.rejection_reason}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${canManageTask(task) ? `
+                    <div style="margin-top: 30px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        ${task.status !== 'completed' ? `<button class="btn btn-success" onclick="updateTaskStatus(${task.id}, 'completed'); closeModal();">✅ Mark Complete</button>` : ''}
+                        ${task.status !== 'progress' ? `<button class="btn btn-primary" onclick="updateTaskStatus(${task.id}, 'progress'); closeModal();">🔄 In Progress</button>` : ''}
+                        ${task.status !== 'rejected' ? `<button class="btn btn-danger" onclick="rejectTaskModal(${task.id})">❌ Reject</button>` : ''}
+                    </div>
+                ` : ''}
+                
+                <div style="margin-top: 30px; text-align: center;">
+                    <button class="btn btn-primary" onclick="closeModal()">Close</button>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+        }
+
+        function rejectTaskModal(taskId) {
+            const reason = prompt('Please provide a rejection reason:');
+            if (reason && reason.trim()) {
+                updateTaskStatus(taskId, 'rejected', reason.trim());
+                closeModal();
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('authToken');
+                authToken = null;
+                currentUser = null;
+                showLogin();
+            }
+        }
+
+        // Utility functions
+        function showAlert(containerId, message, type) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+                setTimeout(() => {
+                    if (container) container.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        function clearAlert(containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '';
+            }
+        }
+
+        function setLoading(type, loading) {
+            const spinner = document.getElementById(type + 'Spinner');
+            const text = document.getElementById(type + 'Text');
+            
+            if (spinner && text) {
+                if (loading) {
+                    spinner.classList.remove('hidden');
+                    text.textContent = 'Loading...';
+                } else {
+                    spinner.classList.add('hidden');
+                    text.textContent = type === 'login' ? 'Login' : type === 'register' ? 'Register' : 'Create Task';
+                }
+            }
+        }
+
+        // Test backend connection on page load
+        async function testBackend() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    console.log('✅ Backend connection successful');
+                } else {
+                    console.log('❌ Backend not responding');
+                }
+            } catch (error) {
+                console.log('❌ Cannot connect to backend:', error);
+            }
+        }
+
+        // Test connection when page loads
+        setTimeout(testBackend, 1000);
+    </script>
+</body>
+</html>
