@@ -1,60 +1,5 @@
-
-// Add this at the top of your script.js file (replace existing database connection)
-
 // Load environment variables
 require('dotenv').config();
-
-// Database connection - Railway friendly
-let db;
-async function initDatabase() {
-    try {
-        // Railway provides these environment variables automatically
-        const dbConfig = {
-            host: process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost',
-            port: process.env.MYSQL_PORT || process.env.DB_PORT || 3306,
-            user: process.env.MYSQL_USERNAME || process.env.DB_USER || 'root',
-            password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || 'hanssen75',
-            database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'railway',
-            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-        };
-
-        db = await mysql.createConnection(dbConfig);
-        
-        console.log('✅ Connected to MySQL database');
-        console.log(`📍 Database: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
-        
-        // Create tables if they don't exist
-        await createTables();
-    } catch (error) {
-        console.error('❌ Database connection failed:', error);
-        process.exit(1);
-    }
-}
-
-// Updated config object for Railway
-const config = {
-    server: {
-        port: process.env.PORT || 3000,
-        allowedOrigins: process.env.ALLOWED_ORIGINS 
-            ? process.env.ALLOWED_ORIGINS.split(',')
-            : [
-                'http://localhost:3000',
-                'http://localhost:8080',
-                'https://unmatchedtasks.online',
-                'https://www.unmatchedtasks.online'
-            ]
-    },
-    jwt: {
-        secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-    },
-    discord: {
-        botToken: process.env.DISCORD_BOT_TOKEN || 'YOUR_DISCORD_BOT_TOKEN_HERE',
-        clientId: process.env.DISCORD_CLIENT_ID || 'YOUR_DISCORD_CLIENT_ID_HERE',
-        guildId: process.env.DISCORD_GUILD_ID || 'YOUR_DISCORD_SERVER_ID_HERE',
-        channelId: process.env.DISCORD_CHANNEL_ID || 'YOUR_DISCORD_CHANNEL_ID_FOR_NOTIFICATIONS'
-    }
-};
 
 const express = require('express');
 const mysql = require('mysql2/promise');
@@ -65,10 +10,34 @@ const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const config = require('./config.json');
 
 const app = express();
-const PORT = config.server.port || 3000;
+const PORT = process.env.PORT || 3000;
+
+// Configuration - Railway friendly
+const config = {
+    server: {
+        port: PORT,
+        allowedOrigins: process.env.ALLOWED_ORIGINS 
+            ? process.env.ALLOWED_ORIGINS.split(',')
+            : [
+                'http://localhost:3000',
+                'http://localhost:8080',
+                'https://unmatchedtasks.online',
+                'https://www.unmatchedtasks.online'
+            ]
+    },
+    jwt: {
+        secret: process.env.JWT_SECRET || 'hanssen-production-super-secret-jwt-key-2025',
+        expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+    },
+    discord: {
+        botToken: process.env.DISCORD_BOT_TOKEN || 'YOUR_DISCORD_BOT_TOKEN_HERE',
+        clientId: process.env.DISCORD_CLIENT_ID || 'YOUR_DISCORD_CLIENT_ID_HERE',
+        guildId: process.env.DISCORD_GUILD_ID || 'YOUR_DISCORD_SERVER_ID_HERE',
+        channelId: process.env.DISCORD_CHANNEL_ID || 'YOUR_DISCORD_CHANNEL_ID_FOR_NOTIFICATIONS'
+    }
+};
 
 // Middleware
 app.use(cors({
@@ -111,17 +80,25 @@ const upload = multer({
     }
 });
 
-// Database connection
+// Database connection - Railway friendly
 let db;
 async function initDatabase() {
     try {
-        db = await mysql.createConnection({
-            host: config.database.host,
-            user: config.database.user,
-            password: config.database.password,
-            database: config.database.name,
-            port: config.database.port
-        });
+        // Railway provides these environment variables automatically
+        const dbConfig = {
+            host: process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost',
+            port: process.env.MYSQL_PORT || process.env.DB_PORT || 3306,
+            user: process.env.MYSQL_USERNAME || process.env.DB_USER || 'root',
+            password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || 'hanssen75',
+            database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'railway',
+            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+        };
+
+        console.log('🔄 Connecting to database...');
+        console.log(`📍 Host: ${dbConfig.host}:${dbConfig.port}`);
+        console.log(`📊 Database: ${dbConfig.database}`);
+
+        db = await mysql.createConnection(dbConfig);
         
         console.log('✅ Connected to MySQL database');
         
@@ -129,47 +106,94 @@ async function initDatabase() {
         await createTables();
     } catch (error) {
         console.error('❌ Database connection failed:', error);
-        process.exit(1);
+        // Don't exit in production, let Railway restart
+        if (process.env.NODE_ENV !== 'production') {
+            process.exit(1);
+        }
     }
 }
 
 // Create database tables
 async function createTables() {
-    const createUsersTable = `
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            email VARCHAR(100) UNIQUE NOT NULL,
-            password_hash VARCHAR(255) NOT NULL,
-            discord_id VARCHAR(20) UNIQUE,
-            discord_username VARCHAR(50),
-            role ENUM('none', 'staff', 'developer', 'admin') DEFAULT 'none',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )
-    `;
+    try {
+        const createUsersTable = `
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                discord_id VARCHAR(20) UNIQUE,
+                discord_username VARCHAR(50),
+                role ENUM('none', 'staff', 'developer', 'admin') DEFAULT 'none',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            )
+        `;
 
-    const createTasksTable = `
-        CREATE TABLE IF NOT EXISTS tasks (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
-            area ENUM('script', 'cars', 'clothing', 'mlo') NOT NULL,
-            description TEXT NOT NULL,
-            assignee_id INT,
-            evidence_url VARCHAR(500),
-            created_by_id INT NOT NULL,
-            status ENUM('pending', 'progress', 'completed', 'rejected') DEFAULT 'pending',
-            rejection_reason TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            FOREIGN KEY (assignee_id) REFERENCES users(id) ON DELETE SET NULL,
-            FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    `;
+        const createTasksTable = `
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                area ENUM('script', 'cars', 'clothing', 'mlo') NOT NULL,
+                description TEXT NOT NULL,
+                assignee_id INT,
+                evidence_url VARCHAR(500),
+                created_by_id INT NOT NULL,
+                status ENUM('pending', 'progress', 'completed', 'rejected') DEFAULT 'pending',
+                rejection_reason TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (assignee_id) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        `;
 
-    await db.execute(createUsersTable);
-    await db.execute(createTasksTable);
-    console.log('✅ Database tables created/verified');
+        await db.execute(createUsersTable);
+        await db.execute(createTasksTable);
+        console.log('✅ Database tables created/verified');
+
+        // Create default admin user if it doesn't exist
+        await createDefaultUsers();
+    } catch (error) {
+        console.error('❌ Error creating tables:', error);
+    }
+}
+
+// Create default users
+async function createDefaultUsers() {
+    try {
+        const [adminExists] = await db.execute('SELECT id FROM users WHERE username = ?', ['admin']);
+        
+        if (adminExists.length === 0) {
+            const adminPassword = await bcrypt.hash('admin123', 12);
+            await db.execute(
+                'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
+                ['admin', 'admin@unmatchedtasks.online', adminPassword, 'admin']
+            );
+            console.log('✅ Default admin user created (admin/admin123)');
+        }
+
+        // Create some sample developers
+        const sampleUsers = [
+            { username: 'hanssen', email: 'hanssen@unmatchedtasks.online', role: 'developer' },
+            { username: 'alice', email: 'alice@unmatchedtasks.online', role: 'developer' },
+            { username: 'bob', email: 'bob@unmatchedtasks.online', role: 'developer' }
+        ];
+
+        for (const user of sampleUsers) {
+            const [userExists] = await db.execute('SELECT id FROM users WHERE username = ?', [user.username]);
+            if (userExists.length === 0) {
+                const password = await bcrypt.hash('dev123', 12);
+                await db.execute(
+                    'INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)',
+                    [user.username, user.email, password, user.role]
+                );
+                console.log(`✅ Created sample user: ${user.username}/dev123`);
+            }
+        }
+    } catch (error) {
+        console.error('Error creating default users:', error);
+    }
 }
 
 // Discord Bot Setup
@@ -181,43 +205,51 @@ const discordClient = new Client({
     ]
 });
 
-discordClient.once('ready', async () => {
-    console.log('✅ Discord bot is ready!');
-    await registerSlashCommands();
-});
+// Only start Discord bot if token is provided
+if (config.discord.botToken && config.discord.botToken !== 'YOUR_DISCORD_BOT_TOKEN_HERE') {
+    discordClient.once('ready', async () => {
+        console.log('✅ Discord bot is ready!');
+        await registerSlashCommands();
+    });
 
-// Handle slash commands
-discordClient.on('interactionCreate', async interaction => {
-    if (!interaction.isChatInputCommand()) return;
+    discordClient.on('interactionCreate', async interaction => {
+        if (!interaction.isChatInputCommand()) return;
 
-    const { commandName } = interaction;
+        const { commandName } = interaction;
 
-    try {
-        switch (commandName) {
-            case 'create-task':
-                await handleCreateTaskCommand(interaction);
-                break;
-            case 'my-tasks':
-                await handleMyTasksCommand(interaction);
-                break;
-            case 'task-status':
-                await handleTaskStatusCommand(interaction);
-                break;
-            case 'assign-task':
-                await handleAssignTaskCommand(interaction);
-                break;
-            case 'task-info':
-                await handleTaskInfoCommand(interaction);
-                break;
-            case 'help':
-                await handleHelpCommand(interaction);
-                break;
+        try {
+            switch (commandName) {
+                case 'create-task':
+                    await handleCreateTaskCommand(interaction);
+                    break;
+                case 'my-tasks':
+                    await handleMyTasksCommand(interaction);
+                    break;
+                case 'task-status':
+                    await handleTaskStatusCommand(interaction);
+                    break;
+                case 'assign-task':
+                    await handleAssignTaskCommand(interaction);
+                    break;
+                case 'task-info':
+                    await handleTaskInfoCommand(interaction);
+                    break;
+                case 'help':
+                    await handleHelpCommand(interaction);
+                    break;
+            }
+        } catch (error) {
+            console.error('Command error:', error);
+            await interaction.reply({ content: 'An error occurred while processing your command.', ephemeral: true });
         }
-    } catch (error) {
-        console.error('Command error:', error);
-        await interaction.reply({ content: 'An error occurred while processing your command.', ephemeral: true });
-    }
-});
+    });
+
+    discordClient.login(config.discord.botToken).catch(err => {
+        console.error('Discord bot login failed:', err);
+    });
+} else {
+    console.log('⚠️ Discord bot token not provided, skipping Discord integration');
+}
 
 // Register slash commands
 async function registerSlashCommands() {
@@ -717,10 +749,10 @@ function getStatusColor(status) {
     }
 }
 
-discordClient.login(config.discord.botToken);
-
 // Discord notification functions
 async function sendTaskNotification(task, type = 'new') {
+    if (!discordClient.isReady()) return;
+    
     try {
         const channel = await discordClient.channels.fetch(config.discord.channelId);
         if (!channel) return;
@@ -794,6 +826,8 @@ async function sendTaskNotification(task, type = 'new') {
 }
 
 async function sendAssignmentDM(discordId, task) {
+    if (!discordClient.isReady()) return;
+    
     try {
         const user = await discordClient.users.fetch(discordId);
         if (user) {
@@ -841,6 +875,16 @@ function requireRole(roles) {
         next();
     };
 }
+
+// Health check (important for Railway)
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        database: db ? 'connected' : 'disconnected',
+        discord: discordClient.isReady() ? 'connected' : 'disconnected'
+    });
+});
 
 // Auth Routes
 app.post('/api/register', async (req, res) => {
@@ -1219,25 +1263,6 @@ app.get('/api/statistics', authenticateToken, async (req, res) => {
     }
 });
 
-// Discord linking route
-app.post('/api/link-discord', authenticateToken, async (req, res) => {
-    try {
-        const { discordId, discordUsername } = req.body;
-        
-        await db.execute(
-            'UPDATE users SET discord_id = ?, discord_username = ? WHERE id = ?',
-            [discordId, discordUsername, req.user.userId]
-        );
-        
-        res.json({ message: 'Discord account linked successfully' });
-    } catch (error) {
-        console.error('Link Discord error:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Add this to your script.js file after the other routes
-
 // Discord linking routes
 app.post('/api/link-discord', authenticateToken, async (req, res) => {
     try {
@@ -1310,11 +1335,6 @@ app.delete('/api/unlink-discord', authenticateToken, async (req, res) => {
     }
 });
 
-// Health check
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
 // Error handling middleware
 app.use((error, req, res, next) => {
     console.error('Unhandled error:', error);
@@ -1331,9 +1351,10 @@ async function startServer() {
     try {
         await initDatabase();
         
-        app.listen(PORT, () => {
+        app.listen(PORT, '0.0.0.0', () => {
             console.log(`🚀 Server running on port ${PORT}`);
             console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+            console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
         });
     } catch (error) {
         console.error('Failed to start server:', error);
@@ -1350,8 +1371,10 @@ process.on('SIGINT', async () => {
         console.log('✅ Database connection closed');
     }
     
-    discordClient.destroy();
-    console.log('✅ Discord bot disconnected');
+    if (discordClient.isReady()) {
+        discordClient.destroy();
+        console.log('✅ Discord bot disconnected');
+    }
     
     process.exit(0);
 });
